@@ -1,0 +1,222 @@
+---
+title: "Heart Failure Analysis"
+author: "Elaboré par Agrebi Mohamed, Majoul Achraf et Jebri Souhir"
+date: "2024-06-29"
+output:
+  html_document:
+    toc: true
+  pdf_document:
+    fig_height: 5
+    fig_width: 5
+always_allow_html: true
+---
+
+
+```{r setup, include=FALSE}
+# Chargement des bibliothèques nécessaires
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(knitr)
+library(DT)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Les maladies cardiovasculaires (MCV) sont la cause principale de décès à l'échelle mondiale, avec environ 17,9 millions de vies perdues chaque année. L'objectif de ce projet est d'explorer un dataset détaillant les caractéristiques des patients souffrant de MCV. Ce dataset, composé de 11 attributs clés, permet d'identifier les facteurs de risque et de mieux comprendre les conditions conduisant aux maladies cardiaques.
+
+# Importation des données
+
+Tout d'abord, les données ont été importées à partir d'un fichier CSV. Le dataset utilisé est nommé "Heart Failure Prediction Dataset" et est disponible sur Kaggle [ici](https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction).
+
+```{r import_data}
+data<-read_csv("C:/Users/Med/Downloads/archive (15)/heart.csv")
+```
+
+Ensuite, les premières lignes du jeu de données ont été extraites et présentées sous forme de tableau à l'aide de la fonction kable() pour faciliter la visualisation des données initiales. On a renommé les variables pour une meileure lisibilité du tableau.
+
+```{r head_data}
+data<-rename(data, CPType=ChestPainType, RBP=RestingBP, Chol=Cholesterol,
+             FBS=FastingBS, ResECG=RestingECG, ExAng=ExerciseAngina, HD=HeartDisease)
+extrait<-head(data, 3)
+kable(extrait)
+```
+
+# Analyse exploratoire des données
+
+L'exploration des données est essentielle pour révéler les détails cachés et comprendre les tendances significatives présentes dans notre ensemble de données.
+
+## Analyse univariée
+
+Pour comprendre chaque variable individuellement, nous débutons par une analyse univariée explorant leurs distributions et leurs caractéristiques descriptives.
+
+### Exemple de variable quantitative
+
+Pour explorer la distribution des âges dans notre ensemble de données, nous avons créé un histogramme illustrant la répartition des âges au sein du dataset. Les barres indiquent la fréquence des individus pour chaque intervalle d'âge, offrant une vue d'ensemble de la distribution des âges parmi les données collectées.
+
+```{r histogram_age}
+ggplot(data) +
+  geom_histogram(aes(x=Age), fill="skyblue", color="black")
+```
+
+Un résumé des statistiques descriptives pour la variable 'Age' de notre ensemble de données a été obtenu à l'aide de la fonction summary(), offrant un aperçu rapide des principales mesures de tendance centrale, de dispersion et des valeurs extrêmes.
+
+```{r summary_age}
+summary(data$Age)
+```
+
+La distribution des âges semble suivre une forme approximativement normale, avec une concentration plus élevée autour des valeurs centrales (médiane et moyenne arithmétique).
+Cette distribution pourrait avoir des implications importantes pour l'analyse de nos résultats, en particulier lors de l'évaluation de la relation entre l'âge et d'autres variables d'intérêt.
+
+### Exemple de variable qualitative
+
+Le graphique ci-dessous montre la distribution des différents types de CP (Chest Pain Type) présents dans le dataset. Chaque barre représente la fréquence d'un type spécifique de douleur thoracique (CPType) observée.
+
+```{r barplot_CPType}
+ggplot(data) +
+  geom_bar(aes(x=CPType), fill="darkblue")
+```
+
+Le type de douleur thoracique ASY (Asymptomatic) est le plus fréquent avec quasiment 500 occurrences. Cela indique qu'une grande proportion des patients ne ressentent pas de symptômes de douleur thoracique.
+Alors que la douleur thoracique typique TA (Typical Angina) est la moins fréquente.Ce qui pourrait refléter une moindre prévalence de ce type de douleur dans notre échantillon.
+
+## Analyse bivariée 
+
+Pour aborder l'analyse bivariée, nous allons explorer les relations entre différentes paires de variables. 
+
+### Exemple de deux variables quantitatives
+
+Examinons la relation entre l'âge et la fréquence cardiaque maximale (MaxHR). Le graphique de dispersion ci-dessous nous permettra de visualiser comment ces deux variables interagissent.
+
+```{r scatter_Age_MaxHR}
+ggplot(data) +
+  geom_point(aes(x=Age, y=MaxHR), color="brown", alpha=0.5)
+```
+
+En observant le graphique, il semble y avoir une tendance descendante, indiquant que la MaxHR diminue généralement avec l'âge. Cela pourrait suggérer une relation inverse entre les deux variables.
+Cependant, la dispersion des points autour de la ligne de tendance suggère une variabilité importante. Cela signifie que même si une tendance globale existe, il y a des différences individuelles notables.
+
+### Exemple d'une variable qualitative et une variable quantitative
+
+Dans cet exemple, nous utilisons un graphique boxplot pour examiner la répartition de la pression sanguine systolique (RBP) selon les catégories de genre (Sex). Cela nous permet d'observer les variations et les tendances dans les mesures de RBP entre les groupes de sexe.
+
+```{r boxplot_Sex_RBP}
+ggplot(data) +
+  geom_boxplot(aes(x=Sex, y=RBP), fill="yellow", color="black", varwidth=TRUE)
+```
+
+Visuellement à partir du boxplot, il n'y a pas de différence significative entre les distributions de la RBP entre les groupes de sexe Male et Female, tant du point de vue de la médiane que de la dispersion des données.
+
+### Exemple de deux variables qualitatives
+
+Pour visualiser la relation entre la présence de maladies cardiaques (HD) et l'angine induite par l'exercice (ExAng), nous avons créé un diagramme à barres. Ce graphique permet de comparer la fréquence des maladies cardiaques chez les individus ayant ou non une ExAng.
+
+```{r barplot_HD_ExAng}
+data$HD<- factor(data$HD, levels = c(0, 1), labels = c("Non", "Oui"))
+ggplot(data) +
+  geom_bar(aes(x=HD, fill=ExAng), position="dodge")
+```
+
+Il semble y avoir une corrélation entre la présence de maladie cardiaque et l'angine induite par l'exercice. En effet, la majorité des individus avec une HD souffrent également d'ExAng. Alors qu'un nombre significatif d'individus sans maladie cardiaque n'en souffrent pas.
+
+## Analyse multivariée
+
+Dans cette section, nous réalisons une analyse multivariée pour examiner les relations simultanées entre plusieurs variables du dataset.
+
+### Exemple avec 3 variables 
+
+Pour explorer les relations entre l’âge (Age), la fréquence cardiaque maximale (MaxHR), et la présence de maladies cardiaques (HD), nous utilisons un diagramme de dispersion. Ce graphique permet de visualiser comment la MaxHR et l’âge varient en fonction de la présence ou de l’absence de HD, indiquée par différentes couleurs.
+
+```{r scatter_Age_MaxHR_HD}
+ggplot(data) +
+  geom_point(aes(x=Age , y=MaxHR , color= HD))
+```
+
+Les points couvrent une large gamme de valeurs pour l'âge et la fréquence cardiaque maximale, indiquant une variation significative parmi les individus.
+Visuellement, Les individus atteints de maladies cardiaques (couleur "Oui") tendent à avoir une MaxHR plus faible par rapport aux individus sains, en particulier chez les plus âgés.
+
+### Exemple avec 4 variables
+
+En continuité avec l'analyse précédente, nous avons enrichi notre exploration en utilisant le niveau de transparence (alpha) pour représenter les différents niveaux d'ampleur de le dépression (Oldpeak).
+
+```{r scatter_Age_MaxHR_HD_Oldpeak}
+ggplot(data) +
+  geom_point(aes(x=Age , y=MaxHR , color= HD, alpha=Oldpeak)) 
+```
+
+Le diagramme de dispersion suggère des variations intéressantes dans la fréquence cardiaque maximale en fonction de l'âge, de la présence de maladies cardiaques et de l'ampleur de la dépression , mettant en évidence des patterns potentiellement significatifs dans ces variables.
+
+# Manipulation des données
+
+Dans cette section, nous explorerons les différentes manipulations effectuées sur les données afin de préparer notre analyse exploratoire.
+
+Pour analyser la répartition des patients selon le type de douleur thoracique 'ASY', nous avons utilisé le code suivant pour filtrer les données et compter les occurrences par sexe, présenté dans le tableau ci-dessous:
+
+```{r CP_S}
+CP_S <- data %>%
+  filter(CPType=="ASY") %>%
+  count(Sex)
+kable(CP_S)
+```
+
+Par la suite, nous avons extrait et affiché le maximum de la variable Cholestérol dans notre jeu de données.
+
+```{r M_Cho}
+M_Cho<- slice_max(data, Chol)
+kable(M_Cho)
+```
+
+Maintenant, pour identifier les valeurs les plus élevées de la fréquence cardiaque maximale (MaxHR) dans notre ensemble de données, nous avons sélectionné les cinq observations correspondantes et les avons présentées.
+
+```{r M_HR}
+M_HR<- data %>%
+  arrange(MaxHR) %>%
+  slice_head(n=5)
+kable(M_HR)
+```
+
+Suite à cela, nous avons calculé le ratio entre l'âge et la pression artérielle au repos (RBP) pour chaque observation dans notre jeu de données. En ordonnant ces ratios, nous avons sélectionné les quatre valeurs les plus basses pour les présenter dans le tableau suivant.
+
+```{r IM}
+IM<- data %>%
+  mutate(IM=Age/RBP) %>%
+  arrange(IM) %>%
+  slice_head(n=4) %>%
+  select(Age, RBP, IM)
+  
+kable(IM)
+```
+
+Consécutivement, nous avons regroupé les données par sexe et calculé si chaque observation avait un cholestérol supérieur ou inférieur à la moyenne. Ensuite, nous avons sélectionné les premières observations de chaque groupe et présenté leurs niveaux de cholestérol dans le tableau ci-dessous
+
+```{r S_Cho}
+S_Cho<- data %>%
+  group_by(Sex) %>%
+  mutate(Chol_st=ifelse(Chol>mean(Chol, na.rm=TRUE), "above_avg", "below_avg")) %>%
+  slice_head(n=1) %>%
+  select(Chol, Chol_st)
+kable(S_Cho)
+  
+```
+
+Enfin, nous avons groupé les données par sexe et calculé la moyenne de la fréquence cardiaque maximale (MaxHR) pour chaque groupe. Les résultats sont présentés dans le tableau suivant :
+
+```{r M_MaxHR}
+M_MaxHR<- data %>%
+  group_by(Sex) %>%
+  summarise(mean_MaxHR=mean(MaxHR, na.rm=TRUE))
+kable(M_MaxHR)
+  
+```
+
+# Conclusion
+
+Cette analyse approfondie des données sur les maladies cardiovasculaires a permis de mettre en lumière plusieurs aspects cruciaux. À travers l'exploration des caractéristiques des patients et l'étude des relations entre différentes variables, nous avons identifié des tendances significatives et des insights potentiels. Ces résultats fournissent une base solide pour de futures recherches et interventions visant à mieux comprendre et prévenir les maladies cardiaques, qui restent une cause majeure de décès à l'échelle mondiale.
+
+
+
+
+
+
